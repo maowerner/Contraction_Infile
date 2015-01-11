@@ -61,7 +61,12 @@ private:
 
   // new stuff
   void init_from_infile();
+  void set_C2(const Operators& in1, const Operators& in2, size_t& i);
+  void set_C4(const Operators& in1, const Operators& in2, const Operators& in3, 
+              const Operators& in4, size_t& i);
   vec_pdg_Corr op_Corr;
+  vec_pdg_C2 op_C2;
+  vec_pdg_C4 op_C4;
   //
 
 
