@@ -63,6 +63,8 @@ public: // TODO: should be changed to private at a later point
   std::vector<int> operator_numbers;
   std::string GEVP;
   std::vector<int> tot_mom;
+//TODO: replace by indexlist_1 index;
+  std::list<size_t> index;
 
 public:
 	/// @brief Constructor.

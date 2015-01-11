@@ -17,7 +17,7 @@ all: rmxeq mkdep mkxeq
 .PHONY: all
 
 # main programs and modules to be compiled
-
+#
 MAIN = Infile
 
 GENERAL = GlobalData 
@@ -31,24 +31,23 @@ VPATH = .:$(MDIR)
 # Logging option (-mpilog or -mpitrace or -mpianim)
 LOGOPTION =
 
-LIMEPATH = /home/knippsch/ExternLibraries/lime-1.3.2
+LIMEPATH = /hiskp2/jost/code/lime #/hiskp2/werner/libraries/lime-1.3.2
 
 # additional include directories
-INCPATH = /home/knippsch/ExternLibraries/eigen-3.2.1 \
-          /home/knippsch/ExternLibraries/boost_1_55_0 \
+INCPATH = /hiskp2/werner/libraries/eigen-eigen-1306d75b4a21 \
+          /hiskp2/werner/libraries/boost_1_55_0 \
           $(LIMEPATH)/include/ ../include 
 
 # additional libraries
 
-LIBS = lime boost_program_options
+LIBS = boost_program_options lime 
 
-LIBPATH = $(LIMEPATH)/lib  /usr/local/lib /home/knippsch/ExternLibraries/boost_1_55_0/stage/lib/
+LIBPATH = /usr/local/lib /hiskp2/werner/libraries/boost_1_55_0/stage/lib/ $(LIMEPATH)/lib 
 
 
 # scheduling and optimization options
-CFLAGS = -g -Wall -pedantic -std=c++11 -O2 -march=native -Wno-unused-variable \
-         -Wno-unused-local-typedefs -Wno-sign-compare -fopenmp  
-
+CFLAGS = -Wall -pedantic -std=c++0x -fopenmp -O2 -march=native -Wno-unused-variable \
+         -Wno-unused-local-typedefs -Wno-sign-compare 
 ############################## do not change ###################################
 
 SHELL=/bin/bash

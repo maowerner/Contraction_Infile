@@ -55,6 +55,7 @@ quark make_quark (const std::string& quark_string) {
 // *****************************************************************************
 void GlobalData::init_from_infile() {
 
+  size_t i = 0;
   // extracting all operators which are used in correlations functions
   std::vector<int> used_operators;
   for(const auto& corr_list : correlator_list)
@@ -73,19 +74,51 @@ void GlobalData::init_from_infile() {
       write.dis3 = individual_operator.dil_vec;
       for(auto mom : individual_operator.mom_vec){
         write.p3 = mom;
+        write.id = i++;
         op_Corr.push_back(write);
       }
     }
   }
   // Test output for the time beeing TODO: can be deleted later
   for(auto a : op_Corr){
-    std::cout << a.gamma;
+    std::cout << a.id << "\t" << a.gamma;
     for(auto b : a.dis3)
-      std::cout << " " << b;
+      std::cout << "\t" << b;
     for(auto b : a.p3)
-      std::cout << " " << b;
+      std::cout << "\t" << b;
     std::cout << std::endl;
   }
+
+  i = 0;
+  pdg_C2 write;
+
+  for(const auto& corr : correlator_list){
+    for(const auto& op_entry : corr.operator_numbers)
+      for(const auto& individual_operator : operator_list[op_entry])
+
+    for(const auto& op_so : op_Corr){
+      if(op_so == individual_operator)
+    for(const auto& op_si : op_Corr){
+
+      if(corr.type.compare(0,3,"C2+") == 0){
+        write.index.emplace_back(std::pair<size_t, size_t>(id1, id2));
+        write.id = i++;
+        op_C2.push_back(write);
+  
+        corr.index = write.id;
+      }
+      else if(corr.type.compare(0,5,"C4I2+") == 0){
+        write.index.emplace_back(std::pair<size_t, size_t>(id1, id2));
+        write.id = i++;
+        op_C2.push_back(write);
+        write.index.emplace_back(std::pair<size_t, size_t>(id3, id4));
+        write.id = i++;
+        op_C2.push_back(write);
+      }
+
+    } //loop over quantum numbers ends here
+  } //loop over correlators ends here
+
 //    for(const auto& bla : op_Corr)
 //    std::cout << bla.gamma << std::endl;
 
@@ -128,9 +161,9 @@ static std::array<int, 3> create_3darray_from_string(std::string in) {
 
   boost::split(tokens, in, boost::is_any_of(","));
 
-  return {boost::lexical_cast<int>(tokens[0]),
+  return {{boost::lexical_cast<int>(tokens[0]),
           boost::lexical_cast<int>(tokens[1]),
-          boost::lexical_cast<int>(tokens[2]) };
+          boost::lexical_cast<int>(tokens[2])}};
 
 }
 // *****************************************************************************
@@ -142,7 +175,7 @@ static void create_all_momentum_combinations(const std::vector<int>& in,
   for(int p1 = -max_p; p1 < max_p+1; p1++)
     for(int p2 = -max_p; p2 < max_p+1; p2++)
       for(int p3 = -max_p; p3 < max_p+1; p3++)
-        all_p.push_back({p1, p2, p3});
+        all_p.push_back({{ p1, p2, p3 }});
   // copying wanted combinations into out array
   for(const auto& p : in)
     for(const auto& all : all_p)
@@ -192,7 +225,7 @@ Operator_list make_operator_list(const std::string& operator_string) {
       // getting the displacement indices
       else if (str.compare(0,1,"d") == 0) {
         if(str.compare(1,1,"0") == 0)
-          dil_vec = {0, 0, 0};
+          dil_vec = {{0, 0, 0}};
         else if (str.compare(1,1,"(") == 0)
           dil_vec = create_3darray_from_string(str);
         else {
