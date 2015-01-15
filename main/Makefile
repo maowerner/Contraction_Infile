@@ -20,7 +20,8 @@ all: rmxeq mkdep mkxeq
 #
 MAIN = Infile
 
-GENERAL = GlobalData QuantumNumbers
+GENERAL = GlobalData QuantumNumbers GlobalData_input_data_handling \
+	  GlobalData_tests
 
 MODULES = $(GENERAL)
 

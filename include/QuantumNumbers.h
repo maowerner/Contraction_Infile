@@ -14,11 +14,12 @@ class QuantumNumbers {
 
     static QuantumNumbers* instance_;
 
+    void set_index_corr();
     void set_index_2pt(const Operators& in1, const Operators& in2);
     void set_index_4pt(const Operators& in1, const Operators& in2, const Operators& in3, 
                 const Operators& in4);
 
-    void init_correlators();
+    void init_lookup_corr();
     void init_lookup_2pt();
     void init_lookup_4pt();
 

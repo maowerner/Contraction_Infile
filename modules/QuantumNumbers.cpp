@@ -30,6 +30,31 @@ bool compare_quantum_numbers_of_pdg(const pdg& in1, const pdg& in2){
 // *****************************************************************************
 // *****************************************************************************
 // *****************************************************************************
+bool compare_mom_dis_of_pdg(const pdg& in1, const pdg& in2){
+
+  if( (in1.p3 == in2.p3) && 
+      (in1.dis3 == in2.dis3))
+    return true;
+  else
+    return false;
+
+}
+
+// *****************************************************************************
+// *****************************************************************************
+// *****************************************************************************
+static void copy_quantum_numbers(const pdg& in, std::array<int, 6>& out){
+  out[0] = in.dis3[0];
+  out[1] = in.dis3[1];
+  out[2] = in.dis3[2];
+  out[3] = in.p3[0];
+  out[4] = in.p3[1]; 
+  out[5] = in.p3[2];
+}
+
+// *****************************************************************************
+// *****************************************************************************
+// *****************************************************************************
 // function that compares a pdg struct with an operator as defined by the input
 // file and checkes if the quantum numbers of pdg are contained in the physical
 // situation described by the operator
@@ -37,8 +62,8 @@ bool compare_quantum_numbers_of_pdg(const pdg& in1, const Operators& in2){
 
   if( in1.gamma == in2.gammas &&
       in1.dis3 == in2.dil_vec){
-    for(auto mom_sq : in2.mom_vec){
-      for(auto mom : mom_sq){
+    for(const auto& mom_vec : in2.mom_vec){
+      for(auto mom : mom_vec){
         if(in1.p3 == mom){
           return true;
           //TODO: is that safer or just spam?
@@ -54,27 +79,115 @@ bool compare_quantum_numbers_of_pdg(const pdg& in1, const Operators& in2){
 // *****************************************************************************
 // *****************************************************************************
 // *****************************************************************************
-size_t get_nb_vdaggerv(const std::vector<pdg>& in){
+void QuantumNumbers::set_index_corr(){
 
-  size_t counter = 0;
-
-  auto it = in.begin();
-  while(it != in.end()) {
-    auto it2 = it;
-    it2++;
-    while(it2 != in.end()) {
-      if(it->gamma != it2->gamma)
-        counter++;
-      it2++;
+  // first number is the operator id, the next three is the displacement vector
+  // and the last three the momentum vector
+  std::vector<std::array<int, 6> > rvdaggervr_qu_nb;
+  std::vector<std::array<int, 6> > vdaggerv_qu_nb;
+  size_t counter_rvdvr = 0;
+  size_t counter_vdv = 0;
+  for(auto& op : lookup_corr){
+    std::array<int, 6> write;
+    if(op.id != 0){
+      copy_quantum_numbers(op, write);
+      // ######################################################################
+      // check if quantum numbers are already stored in rvdaggervr_qu_nb
+      bool is_known_rvdvr = false;
+      size_t fast_counter_rvdvr = 0;// this gives the Op id if QN are duplicate
+      for(const auto& rvdvr : rvdaggervr_qu_nb){
+        if(rvdvr == write){
+          is_known_rvdvr = true;
+          break;
+        }
+        fast_counter_rvdvr++;
+      }
+      if(!is_known_rvdvr){ // setting the unknown quantum numbers
+        op.id_rVdaggerVr = counter_rvdvr;
+        counter_rvdvr++;
+        rvdaggervr_qu_nb.push_back(write);
+      }
+      else
+        op.id_rVdaggerVr = fast_counter_rvdvr;
+      // ######################################################################
+      // check if quantum numbers are already stored in vdaggerv_qu_nb
+      bool is_known_vdv = false;
+      size_t fast_counter_vdv = 0;// this gives the Op id if QN are duplicate
+      // first check for duplicate quantum numbers
+      for(const auto& vdv : vdaggerv_qu_nb){
+        if(vdv == write){
+          is_known_vdv = true;
+          break;
+        }
+        fast_counter_vdv++;
+      }
+      if(!is_known_vdv){ // second check for complex conjugate momenta
+        fast_counter_vdv = 0;
+        for(size_t i = 3; i < 6; i++)
+          write[i] *= -1;
+        for(const auto& vdv : vdaggerv_qu_nb){
+          if(vdv == write){
+            is_known_vdv = true;
+            break;
+          }
+          fast_counter_vdv++;
+        }
+        if(!is_known_vdv){
+          op.id_VdaggerV = counter_vdv;
+          vdaggerv_qu_nb.push_back(write);
+          counter_vdv++;
+        }
+        else{
+          op.flag_VdaggerV = -1;
+          op.id_VdaggerV = fast_counter_vdv;
+        }
+      }
+      else{
+        op.flag_VdaggerV = 1;
+        op.id_VdaggerV = fast_counter_vdv;
+      }
     }
-    it++;
+    else{ // setting the very first entry
+      copy_quantum_numbers(op, write);
+      rvdaggervr_qu_nb.push_back(write);
+      vdaggerv_qu_nb.push_back(write);
+      op.id_VdaggerV = counter_vdv;
+      op.id_rVdaggerVr = counter_rvdvr;
+      counter_rvdvr++;
+      counter_vdv++;
+    }
   }
 
-  std::cout << counter << std::endl;
-  return counter;
+  // setting the lookuptables to be able to reconstruct the quantum numbers
+  // when computing VdaggerV and rVdaggerVr
+  lookup_vdv.resize(vdaggerv_qu_nb.size());
+  lookup_rvdvr.resize(rvdaggervr_qu_nb.size());
+
+  size_t index = 0;
+  for(auto& op_vdv : lookup_vdv){
+    op_vdv.id = index;
+    for(const auto& op : lookup_corr){
+      if(index == op.id_VdaggerV)
+        op_vdv.index = op.id;
+    }
+    index++;
+  }
+  index = 0;
+  for(auto& op_rvdvr : lookup_rvdvr){
+    op_rvdvr.id = index;
+    for(const auto& op : lookup_corr){
+      if(index == op.id_VdaggerV){
+        op_rvdvr.index = op.id;
+        if(op.flag_VdaggerV == 1)
+          op_rvdvr.adjoint = false;
+        else
+          op_rvdvr.adjoint = true;
+      }
+    }
+    index++;
+  }
 
 }
-
 // *****************************************************************************
 // *****************************************************************************
 // *****************************************************************************
@@ -123,15 +236,16 @@ void QuantumNumbers::set_index_4pt(const Operators& in1, const Operators& in2,
   }} //loops over source end here
 
 }
+
 // *****************************************************************************
 // *****************************************************************************
 // *****************************************************************************
-void QuantumNumbers::init_correlators() {
+void QuantumNumbers::init_lookup_corr() {
 
   const Correlator_list correlator_list = global_data->get_correlator_list();
   const std::vector<Operator_list> operator_list = 
     global_data->get_operator_list();
-  size_t i = 0;
+
   // extracting all operators which are used in correlations functions
   std::vector<int> used_operators;
   for(const auto& corr_list : correlator_list)
@@ -149,11 +263,9 @@ void QuantumNumbers::init_correlators() {
       pdg write;
       write.gamma = individual_operator.gammas;
       write.dis3 = individual_operator.dil_vec;
-      for(auto mom_sq : individual_operator.mom_vec){
-        for(auto mom : mom_sq){
+      for(const auto& mom_vec : individual_operator.mom_vec){
+        for(auto mom : mom_vec){
           write.p3 = mom;
-          //TODO: creates wrong numbers if operators are doubly counted
-          write.id = i++;
           lookup_corr.push_back(write);
         }
       }
@@ -172,44 +284,45 @@ void QuantumNumbers::init_correlators() {
     }
     it++;
   }
+  // sorting lookup_corr for equal momentum and displacement vectors - makes it
+  // easier to run over it with auto loops
+  std::vector<pdg> dump_write;
+  while(lookup_corr.size() != 0){
 
-  // Test output for the time being TODO: can be deleted later
-  for(const auto& a : lookup_corr){
+    it = lookup_corr.begin();
+    dump_write.push_back(*it);
+    lookup_corr.erase(it);
+
+    auto it2 = dump_write.end()-1;
+    while(it != lookup_corr.end()) {
+      if(compare_mom_dis_of_pdg(*it, *it2)){
+        dump_write.push_back(*it);
+        lookup_corr.erase(it);
+      }
+      else
+        it++;
+    }
+  }
+  lookup_corr.swap(dump_write);
+
+  // setting the identification numbers of lookup_corr
+  size_t counter = 0;
+  for(auto& op : lookup_corr)
+    op.id = counter++;
+
+  // final setting lookuptables for vdaggerv and so on
+  set_index_corr();
+
+  for(auto a : lookup_corr){
     std::cout << a.id;
     for(auto b : a.gamma)
-      std::cout << "\t" << b;
+    std::cout << " " << b;
     for(auto b : a.dis3)
-      std::cout << "\t" << b;
+      std::cout << " " << b;
     for(auto b : a.p3)
-      std::cout << "\t" << b;
+      std::cout << " " << b;
     std::cout << std::endl;
   }
-
-//    for(const auto& bla : lookup_corr)
-//    std::cout << bla.gamma << std::endl;
-
-//  // nb_op - number of combinations of three-momenta and gamma structures
-//  // op    - vector of all three-momenta, three-displacements and gamma 
-//  //         structure combinations
-  const size_t nb_op = lookup_corr.size();
-  std::cout << nb_op << std::endl;
-  const size_t nb_VdaggerV = get_nb_vdaggerv(lookup_corr);
-//  op_VdaggerV.resize(nb_VdaggerV);
-//  const size_t nb_rVdaggerVr = nb_dis*nb_mom;
-//  op_rVdaggerVr.resize(nb_rVdaggerVr);
-//  set_Corr();
-//
-//  // nb_op_C2 - number of combinations of absolute values squared of momenta
-//  //            and gamma-displacement combinations for 2pt-fct
-//  // op_C2    - vector of all combinations for 2pt-fct and vector of 
-//  //            op-index-pairs with all corresponding three-vectors and gammas
-//  const size_t nb_op_C2 = nb_mom_sq * nb_dg * nb_dg;
-//  op_C2.resize(nb_op_C2);
-//  set_C2();
-//
-//  const size_t nb_op_C4 = nb_mom_sq * nb_mom_sq * nb_dg * nb_dg;
-//  op_C4.resize(nb_op_C4);
-//  set_C4();
 
 }
 
@@ -340,7 +453,7 @@ void QuantumNumbers::init_lookup_4pt() {
 void QuantumNumbers::init_from_infile() {
 
   try{
-    init_correlators();    
+    init_lookup_corr();    
     init_lookup_2pt();
     init_lookup_4pt();
 
