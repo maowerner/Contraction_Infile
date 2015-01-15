@@ -50,270 +50,7 @@ quark make_quark (const std::string& quark_string) {
       boost::lexical_cast<int>(tokens[5]), tokens[6],
       boost::lexical_cast<int>(tokens[7]));
 }
-// *****************************************************************************
-// *****************************************************************************
-// *****************************************************************************
-// function that compares two pdg structs and checks if the corresponding 
-// entries of op_Corr coincide
-bool compare_quantum_numbers_of_pdg(const pdg& in1, const pdg& in2){
 
-  if( (in1.p3 == in2.p3) && 
-      (in1.dis3 == in2.dis3) && 
-      (in1.gamma == in2.gamma))
-    return true;
-  else
-    return false;
-
-}
-
-// *****************************************************************************
-// *****************************************************************************
-// *****************************************************************************
-// function that compares a pdg struct with an operator as defined by the input
-// file and checkes if the quantum numbers of pdg are contained in the physical
-// situation described by the operator
-bool compare_quantum_numbers_of_pdg(const pdg& in1, const Operators& in2){
-
-  if( in1.gamma == in2.gammas &&
-      in1.dis3 == in2.dil_vec){
-    for(auto mom : in2.mom_vec){
-      if(in1.p3 == mom){
-        return true;
-        //TODO: is that safer or just spam?
-        break;
-      }
-    }
-  }
-
-  return false;
-}
-
-// *****************************************************************************
-// *****************************************************************************
-// *****************************************************************************
-size_t get_nb_vdaggerv(const std::vector<pdg>& in){
-
-  size_t counter = 0;
-
-  auto it = in.begin();
-  while(it != in.end()) {
-    auto it2 = it;
-    it2++;
-    while(it2 != in.end()) {
-      if(it->gamma != it2->gamma)
-        counter++;
-      it2++;
-    }
-    it++;
-  }
-
-  std::cout << counter << std::endl;
-  return counter;
-
-}
-
-// *****************************************************************************
-// *****************************************************************************
-// *****************************************************************************
-void GlobalData::set_C2(const Operators& in1, const Operators& in2, size_t& i){
-
-  pdg_C2 write_C2;
-
-  for(const auto& op1 : op_Corr){
-  if(compare_quantum_numbers_of_pdg(op1, in1)){
-
-  for(const auto& op2 : op_Corr){
-  if(compare_quantum_numbers_of_pdg(op2, in2)){
-
-    write_C2.index.emplace_back(std::pair<size_t, size_t>(op1.id, op2.id));
-    
-  }}}} //loops over source and sink end here
-
-  write_C2.id = i++;
-  op_C2.push_back(write_C2);
-}
-
-// *****************************************************************************
-// *****************************************************************************
-// *****************************************************************************
-void GlobalData::set_C4(const Operators& in1, const Operators& in2, 
-                        const Operators& in3, const Operators& in4, size_t& i){
-
-  pdg_C4 write_C4;
-
-  for(const auto& op1 : op_Corr){
-  if(compare_quantum_numbers_of_pdg(op1, in1)){
-
-  for(const auto& op2 : op_Corr){
-  if(compare_quantum_numbers_of_pdg(op2, in2)){
-
-  for(const auto& op3 : op_Corr){
-  if(compare_quantum_numbers_of_pdg(op3, in3)){
-
-  for(const auto& op4 : op_Corr){
-  if(compare_quantum_numbers_of_pdg(op4, in4)){
-
-    write_C4.index.emplace_back(std::array<size_t, 4>
-                                {{op1.id, op2.id, op3.id, op4.id}});
-    
-  }}}}}}}} //loops over source and sink end here
-
-  write_C4.id = i++;
-  op_C4.push_back(write_C4);
-}
-// *****************************************************************************
-// *****************************************************************************
-// *****************************************************************************
-void GlobalData::init_from_infile() {
-
-  size_t i = 0;
-  // extracting all operators which are used in correlations functions
-  std::vector<int> used_operators;
-  for(const auto& corr_list : correlator_list)
-    used_operators.insert(used_operators.end(), 
-                          corr_list.operator_numbers.begin(), 
-                          corr_list.operator_numbers.end());
-  
-  sort(used_operators.begin(), used_operators.end());
-  used_operators.erase(std::unique(used_operators.begin(), 
-                                   used_operators.end()),
-                       used_operators.end());
-  // write quantum number in op_Corr
-  for(const auto& op_entry : used_operators){
-    for(const auto& individual_operator : operator_list[op_entry]){
-      pdg write;
-      write.gamma = individual_operator.gammas;
-      write.dis3 = individual_operator.dil_vec;
-      for(auto mom : individual_operator.mom_vec){
-        write.p3 = mom;
-        //TODO: creates wrong numbers if operators are doubly counted
-        write.id = i++;
-        op_Corr.push_back(write);
-      }
-    }
-  }
-  // doubly counted op_Corr entries are deleted
-  auto it = op_Corr.begin();
-  while(it != op_Corr.end()) {
-    auto it2 = it;
-    it2++;
-    while(it2 != op_Corr.end()) {
-      if(compare_quantum_numbers_of_pdg(*it, *it2))
-        op_Corr.erase(it2);
-      else
-        it2++;
-    }
-    it++;
-  }
-
-  // Test output for the time being TODO: can be deleted later
-  for(auto a : op_Corr){
-    std::cout << a.id << "\t" << a.gamma;
-    for(auto b : a.dis3)
-      std::cout << "\t" << b;
-    for(auto b : a.p3)
-      std::cout << "\t" << b;
-    std::cout << std::endl;
-  }
-
-  // initialization of op_C2
-  
-  // i is quite ugly, but I have no better idea how to set the index atm. Still
-  // has problem with duplicates
-  i = 0;
-
-  for(auto& corr : correlator_list){
-
-  // must be done for 2pt as well as 4pt function
-  if( (corr.type.compare(0,3,"C2+") == 0) || 
-      (corr.type.compare(0,5,"C4I2+") == 0) ){
-    //TODO: split elements of operator_list for identical physical situation
-    // (momenta)
-    for(const auto& infile_op_so : operator_list[corr.operator_numbers[0]]){
-    for(const auto& infile_op_si : operator_list[corr.operator_numbers[1]]){
-      set_C2(infile_op_so, infile_op_si, i);
-  // allows to match correlator with op_C2.id
-  //    corr.index.emplace_back(op_C2.back().id);
-    }} //loops over same physical situation end here
-  } //case 2pt-function ends here
-
-  // must be down in addition for 4pt function
-  if(corr.type.compare(0,5,"C4I2+") == 0){
-    for(const auto& infile_op_so : operator_list[corr.operator_numbers[2]]){
-    for(const auto& infile_op_si : operator_list[corr.operator_numbers[3]]){
-      set_C2(infile_op_so, infile_op_si, i);
-  // allows to match correlator with op_C2.id
-  //    corr.index.emplace_back(op_C2.back().id);
-    }} //loops over same physical situation end here
-  } //case 2pt-function ends here
-
-  } // loop over correlator_list ends here
-
-  std::cout << std::endl;
-  for(auto a : op_C2){
-    for(auto b : a.index){
-      std::cout << a.id << "\t" << b.first << "\t" << b.second << std::endl;
-    }
-  }
-
-  // initialization of op_C4
-  
-  // i is quite ugly, but I have no better idea how to set the index atm. Still
-  // has problem with duplicates
-  i = 0;
-
-  for(auto& corr : correlator_list){
-
-  // must be down in addition for 4pt function
-  if(corr.type.compare(0,5,"C4I2+") == 0){
-    for(const auto& infile_op_1 : operator_list[corr.operator_numbers[0]]){
-    for(const auto& infile_op_2 : operator_list[corr.operator_numbers[1]]){
-    for(const auto& infile_op_3 : operator_list[corr.operator_numbers[2]]){
-    for(const auto& infile_op_4 : operator_list[corr.operator_numbers[3]]){
-      set_C4(infile_op_1, infile_op_2, infile_op_3, infile_op_4, i);
-  // allows to match correlator with op_C2.id
-  //    corr.index.emplace_back(op_C4.back().id);
-    }}}} //loops over same physical situation end here
-  } //case 2pt-function ends here
-
-  } // loop over correlator_list ends here
-
-
-  std::cout << std::endl;
-  for(auto a : op_C4){
-    for(auto b : a.index){
-      std::cout << a.id << "\t" << b[0] << "\t" << b[1] << "\t" << b[2] 
-                << "\t" << b[3] << std::endl;
-    }
-  }
-
-//    for(const auto& bla : op_Corr)
-//    std::cout << bla.gamma << std::endl;
-
-//  // nb_op - number of combinations of three-momenta and gamma structures
-//  // op    - vector of all three-momenta, three-displacements and gamma 
-//  //         structure combinations
-  const size_t nb_op = op_Corr.size();
-  std::cout << nb_op << std::endl;
-  const size_t nb_VdaggerV = get_nb_vdaggerv(op_Corr);
-//  op_VdaggerV.resize(nb_VdaggerV);
-//  const size_t nb_rVdaggerVr = nb_dis*nb_mom;
-//  op_rVdaggerVr.resize(nb_rVdaggerVr);
-//  set_Corr();
-//
-//  // nb_op_C2 - number of combinations of absolute values squared of momenta
-//  //            and gamma-displacement combinations for 2pt-fct
-//  // op_C2    - vector of all combinations for 2pt-fct and vector of 
-//  //            op-index-pairs with all corresponding three-vectors and gammas
-//  const size_t nb_op_C2 = nb_mom_sq * nb_dg * nb_dg;
-//  op_C2.resize(nb_op_C2);
-//  set_C2();
-//
-//  const size_t nb_op_C4 = nb_mom_sq * nb_mom_sq * nb_dg * nb_dg;
-//  op_C4.resize(nb_op_C4);
-//  set_C4();
-
-}
 // *****************************************************************************
 // *****************************************************************************
 // *****************************************************************************
@@ -333,17 +70,19 @@ static std::array<int, 3> create_3darray_from_string(std::string in) {
 
 }
 // *****************************************************************************
-static void create_all_momentum_combinations(const std::vector<int>& in, 
+static void create_all_momentum_combinations(//const std::vector<int>& in, 
+                                        const int p,
                                         std::vector<std::array<int, 3> >& out) {
   // creating all momentum combinations possible and needed
-  int max_p = sqrt(*std::max_element(in.begin(), in.end()));
+//  int max_p = sqrt(*std::max_element(in.begin(), in.end()));
+  int max_p = p;
   std::vector<std::array<int, 3> > all_p;
   for(int p1 = -max_p; p1 < max_p+1; p1++)
     for(int p2 = -max_p; p2 < max_p+1; p2++)
       for(int p3 = -max_p; p3 < max_p+1; p3++)
         all_p.push_back({{p1, p2, p3}});
   // copying wanted combinations into out array
-  for(const auto& p : in)
+//  for(const auto& p : in)
     for(const auto& all : all_p)
       if(p == all[0]*all[0] + all[1]*all[1] + all[2]*all[2])
         out.push_back(all);
@@ -351,16 +90,26 @@ static void create_all_momentum_combinations(const std::vector<int>& in,
 }
 // *****************************************************************************
 static void create_mom_array_from_string(std::string in, 
-                                        std::vector<std::array<int, 3> >& out) {
+                                         std::vector<std::vector<std::array
+                                                    <int, 3> > >& out) {
   // erase the p (first entry)
   in.erase(0,1);
   std::vector<std::string> tokens;
   boost::split(tokens, in, boost::is_any_of(","));
-  std::vector<int> p;
-  for(const auto& t : tokens)
-    p.push_back(boost::lexical_cast<int>(t));
+//  std::vector<int> p;
+  int p;
+  size_t counter = 0;
+  std::cout << tokens.size() << std::endl;
+  out.resize(tokens.size());
+  for(const auto& t : tokens){
+    p = boost::lexical_cast<int>(t);
+    create_all_momentum_combinations(p, out[counter]);
+    counter++;
+  }
+    
+//    p.push_back(boost::lexical_cast<int>(t));
 
-  create_all_momentum_combinations(p, out);
+//  create_all_momentum_combinations(p, out);
 
 }
 // *****************************************************************************
@@ -384,7 +133,7 @@ Operator_list make_operator_list(const std::string& operator_string) {
     boost::split(tokens, op_t, boost::is_any_of("."));
     std::vector<int> gammas;
     std::array<int, 3> dil_vec;
-    std::vector<std::array<int, 3> > mom_vec;
+    std::vector<std::vector< std::array<int, 3> > > mom_vec;
     for (auto str : tokens){
       // getting the gamma structure
       if(str.compare(0,1,"g") == 0)
@@ -403,10 +152,13 @@ Operator_list make_operator_list(const std::string& operator_string) {
       }
       // getting the momenta
       else if (str.compare(0,1,"p") == 0) {
-        if(str.compare(1,1,"(") == 0)
-          mom_vec.push_back(create_3darray_from_string(str));
-        else 
+        if(str.compare(1,1,"(") == 0) {
+          mom_vec.resize(1);
+          mom_vec[0].push_back(create_3darray_from_string(str));
+        }
+        else {
           create_mom_array_from_string(str, mom_vec);
+        }
       }
       // catching wrong entries
       else {
@@ -667,9 +419,6 @@ void GlobalData::read_parameters (int ac, char* av[]) {
     correlator_input_data_handling(correlator_list_configs);
     //
     config_input_data_handling(start_config, end_config, delta_config);
-
-
-    init_from_infile();    
 
     // computing some global variables depending on the input values ***********
     dim_row = Lx * Ly * Lz * 3;

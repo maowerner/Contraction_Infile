@@ -135,10 +135,24 @@ typedef std::list<std::array<size_t, 4> > indexlist_4;
     indexlist_4 index;
   };
 
+  struct index_2pt {
+    size_t id;
+    size_t index_Q2;
+    size_t index_Corr;
+  };
+
+  struct index_4pt {
+    size_t id;
+    size_t index_Q2[2];
+    size_t index_Corr[2];
+  };
+
 typedef std::vector<pdg> vec_pdg_Corr;  
 typedef std::vector<pd> vec_pd_VdaggerV;
 typedef std::vector<pd_r> vec_pd_rVdaggerVr;
 typedef std::vector<pdg_C2> vec_pdg_C2; 
 typedef std::vector<pdg_C4> vec_pdg_C4; 
+typedef std::vector<index_2pt> vec_index_2pt;
+typedef std::vector<index_4pt> vec_index_4pt;
 
 #endif // _TYPEDEFS_H_

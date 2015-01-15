@@ -59,17 +59,6 @@ private:
   void correlator_input_data_handling(
                          const std::vector<std::string>& correlator_string);
 
-  // new stuff
-  void init_from_infile();
-  void set_C2(const Operators& in1, const Operators& in2, size_t& i);
-  void set_C4(const Operators& in1, const Operators& in2, const Operators& in3, 
-              const Operators& in4, size_t& i);
-  vec_pdg_Corr op_Corr;
-  vec_pdg_C2 op_C2;
-  vec_pdg_C4 op_C4;
-  //
-
-
 public:
   static GlobalData* Instance ();
 
@@ -140,6 +129,12 @@ public:
   }
   inline std::vector<quark> get_quarks() {
     return quarks;
+  }
+  inline std::vector<Operator_list>& get_operator_list() {
+    return operator_list;
+  }
+  inline Correlator_list& get_correlator_list() {
+    return correlator_list;
   }
 
   //! All con/de-structors are protected to assure that only one instance exists

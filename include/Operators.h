@@ -44,12 +44,12 @@ struct Operators {
 public: // TODO: should be changed to private at a later point
   std::vector<int> gammas;
   std::array<int, 3> dil_vec;
-  std::vector<std::array<int, 3> > mom_vec;
+  std::vector< std::vector<std::array<int, 3> > > mom_vec;
 
 public:
 	/// @brief Constructor.
 	Operators (std::vector<int> gammas, std::array<int, 3> dil_vec, 
-             std::vector<std::array<int, 3> > mom_vec) :
+             std::vector<std::vector<std::array<int, 3> > > mom_vec) :
                            gammas(gammas), dil_vec(dil_vec), mom_vec(mom_vec) {}
 
 };
@@ -65,8 +65,6 @@ public: // TODO: should be changed to private at a later point
   std::vector<int> operator_numbers;
   std::string GEVP;
   std::vector<int> tot_mom;
-//TODO: replace by indexlist_1 index;
-//  std::list<size_t> index;
 
 public:
 	/// @brief Constructor.
