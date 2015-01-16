@@ -1,4 +1,5 @@
-Infile.o: Infile.cpp ../include/global_data.h \
+global_data_init_lookup_tables.o: \
+ ../modules/global_data_init_lookup_tables.cpp ../include/global_data.h \
  /hiskp2/werner/libraries/eigen-eigen-1306d75b4a21/Eigen/Dense \
  /hiskp2/werner/libraries/eigen-eigen-1306d75b4a21/Eigen/Core \
  /hiskp2/werner/libraries/eigen-eigen-1306d75b4a21/Eigen/src/Core/util/DisableStupidWarnings.h \
@@ -884,4 +885,4 @@ Infile.o: Infile.cpp ../include/global_data.h \
  /hiskp2/werner/libraries/boost_1_55_0/boost/type_traits/remove_volatile.hpp \
  /hiskp2/werner/libraries/boost_1_55_0/boost/type_traits/integral_promotion.hpp \
  /hiskp2/werner/libraries/boost_1_55_0/boost/type_traits/promote.hpp \
- ../include/typedefs.h
+ ../include/typedefs.h ../include/global_data_utils.h

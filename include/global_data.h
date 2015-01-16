@@ -26,7 +26,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 
-#include "Operators.h"
+#include "global_data_typedefs.h"
 #include "typedefs.h"
 
 class GlobalData {
@@ -34,6 +34,7 @@ class GlobalData {
 private:
   //! A pointer on the class itself
   static GlobalData* instance_;
+
   //! globally accessible data
   int Lx, Ly, Lz, Lt;
   int dim_row, V_TS, V_for_lime;
@@ -50,14 +51,23 @@ private:
   std::string path_output;
   std::string path_config;
   std::vector<quark> quarks;
+  
   std::vector<Operator_list> operator_list;
   Correlator_list correlator_list;
-  void quark_input_data_handling(
-                        const std::vector<std::string> quark_configs);
-  void operator_input_data_handling(
-                      const std::vector<std::string> operator_list_configs);
-  void correlator_input_data_handling(
-                         const std::vector<std::string>& correlator_string);
+
+  vec_pdg_Corr lookup_corr;
+  vec_index_2pt lookup_2pt;
+  vec_index_4pt lookup_4pt;
+  std::vector<std::list<size_t> > lookup_2pt_IO;
+  std::vector<std::list<size_t> > lookup_4pt_IO;
+  vec_pd_VdaggerV lookup_vdv;
+  vec_pd_rVdaggerVr lookup_rvdvr;
+  
+  void init_lookup_tables();
+
+  void input_handling(const std::vector<std::string>& quark_configs,
+                      const std::vector<std::string>& operator_list_configs,
+                      const std::vector<std::string>& correlator_list_configs);
 
 public:
   static GlobalData* Instance ();
@@ -135,6 +145,36 @@ public:
   }
   inline Correlator_list& get_correlator_list() {
     return correlator_list;
+  }
+  inline const vec_pdg_Corr& get_lookup_corr() {
+    return lookup_corr;
+  }
+  inline const vec_index_2pt& get_lookup_2pt_trace() {
+    return lookup_2pt;
+  }
+  inline const vec_index_4pt& get_lookup_4pt_trace() {
+    return lookup_4pt;
+  }
+  inline const std::vector<std::list<size_t> >& get_lookup_2pt_IO() {
+    return lookup_2pt_IO;
+  }
+  inline const std::vector<std::list<size_t> >& get_lookup_4pt_IO() {
+    return lookup_4pt_IO;
+  }
+//  inline const indexlist_2& get_rnd_vec_C2() {
+//    return rnd_vec_C2;
+//  }
+//  inline const indexlist_4& get_rnd_vec_C4() {
+//    return rnd_vec_C4;
+//  }
+//  inline const size_t get_index_of_unity() {
+//    return index_of_unity;
+//  }
+  inline const vec_pd_VdaggerV get_lookup_vdaggerv() {
+    return lookup_vdv;
+  }
+  inline const vec_pd_rVdaggerVr get_lookup_rvdaggervr() {
+    return lookup_rvdvr;
   }
 
   //! All con/de-structors are protected to assure that only one instance exists

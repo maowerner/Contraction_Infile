@@ -1,4 +1,6 @@
-GlobalData.o: ../modules/GlobalData.cpp ../include/GlobalData.h \
+global_data_init_lookup_tables_utils.o: \
+ ../modules/global_data_init_lookup_tables_utils.cpp \
+ ../include/global_data.h \
  /hiskp2/werner/libraries/eigen-eigen-1306d75b4a21/Eigen/Dense \
  /hiskp2/werner/libraries/eigen-eigen-1306d75b4a21/Eigen/Core \
  /hiskp2/werner/libraries/eigen-eigen-1306d75b4a21/Eigen/src/Core/util/DisableStupidWarnings.h \
@@ -782,7 +784,7 @@ GlobalData.o: ../modules/GlobalData.cpp ../include/GlobalData.h \
  /hiskp2/werner/libraries/boost_1_55_0/boost/program_options/detail/convert.hpp \
  /hiskp2/werner/libraries/boost_1_55_0/boost/program_options/variables_map.hpp \
  /hiskp2/werner/libraries/boost_1_55_0/boost/program_options/version.hpp \
- ../include/Operators.h ../include/typedefs.h \
+ ../include/global_data_typedefs.h ../include/typedefs.h \
  /hiskp2/werner/libraries/boost_1_55_0/boost/multi_array.hpp \
  /hiskp2/werner/libraries/boost_1_55_0/boost/multi_array/base.hpp \
  /hiskp2/werner/libraries/boost_1_55_0/boost/multi_array/extent_range.hpp \
@@ -884,4 +886,4 @@ GlobalData.o: ../modules/GlobalData.cpp ../include/GlobalData.h \
  /hiskp2/werner/libraries/boost_1_55_0/boost/type_traits/remove_volatile.hpp \
  /hiskp2/werner/libraries/boost_1_55_0/boost/type_traits/integral_promotion.hpp \
  /hiskp2/werner/libraries/boost_1_55_0/boost/type_traits/promote.hpp \
- ../include/typedefs.h ../include/GlobalData_tests.h
+ ../include/typedefs.h ../include/global_data_utils.h

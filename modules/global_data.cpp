@@ -5,8 +5,7 @@
  *      Author: knippsch
  */
 
-#include "GlobalData.h"
-#include "GlobalData_tests.h"
+#include "global_data.h"
 
 namespace po = boost::program_options;
 
@@ -161,25 +160,15 @@ void GlobalData::read_parameters (int ac, char* av[]) {
     }
     ifs.close();
 
-    // *************************************************************************
-    // reading input file options **********************************************
-    //
-    GlobalData_tests::lattice_input_data_handling(path_output, name_lattice, path_config, 
-                                                                Lt, Lx, Ly, Lz);
-    //
-    GlobalData_tests::eigenvec_perambulator_input_data_handling(number_of_eigen_vec,
-        path_eigenvectors, name_eigenvectors, path_perambulators,
-        name_perambulators);
-    //
-    quark_input_data_handling(quark_configs);
-    //
-    operator_input_data_handling(operator_list_configs);
-    //
-    correlator_input_data_handling(correlator_list_configs);
-    //
-    GlobalData_tests::config_input_data_handling(start_config, end_config, delta_config);
+    //reading input file options
+    input_handling(quark_configs, operator_list_configs, 
+                        correlator_list_configs);
 
-    // computing some global variables depending on the input values ***********
+
+    init_lookup_tables();
+
+    // TODO: Are these still needed anywhere?
+    // computing some global variables depending on the input values
     dim_row = Lx * Ly * Lz * 3;
 
     //needed for config_utils.h

@@ -1,4 +1,4 @@
-Infile.o: Infile.cpp ../include/global_data.h \
+global_data.o: ../modules/global_data.cpp ../include/global_data.h \
  /hiskp2/werner/libraries/eigen-eigen-1306d75b4a21/Eigen/Dense \
  /hiskp2/werner/libraries/eigen-eigen-1306d75b4a21/Eigen/Core \
  /hiskp2/werner/libraries/eigen-eigen-1306d75b4a21/Eigen/src/Core/util/DisableStupidWarnings.h \

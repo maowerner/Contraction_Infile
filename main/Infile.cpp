@@ -6,17 +6,14 @@
 // Description : stochastic LapH code
 //============================================================================
 
-#include "GlobalData.h"
-#include "QuantumNumbers.h"
+#include "global_data.h"
 
 int main (int ac, char* av[]) {
 
   // reading in global parameters from input file
-  QuantumNumbers* qns = QuantumNumbers::Instance();
   GlobalData* global_data = GlobalData::Instance();
 
   global_data->read_parameters(ac, av);
-  qns->init_from_infile();
 
 }
 
