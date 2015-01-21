@@ -5,6 +5,7 @@ namespace gdu = ::global_data_utils;
 
 namespace {
 
+// need some functions from namespace global_data_utils
 using gdu::compare_quantum_numbers_of_pdg;
 using gdu::compare_mom_dis_of_pdg;
 using gdu::set_index_corr;
@@ -91,6 +92,10 @@ void init_lookup_corr(const Correlator_list& correlator_list,
       std::cout << " " << b;
     for(auto b : a.p3)
       std::cout << " " << b;
+    std::cout << "\t" << a.id_vdv;
+    std::cout << " " << a.first_vdv;
+    std::cout << " " << a.negative_momentum;
+    std::cout << " " << a.id_rvdvr;
     std::cout << std::endl;
   }
 
@@ -102,7 +107,9 @@ void init_lookup_corr(const Correlator_list& correlator_list,
 void init_lookup_2pt(const Correlator_list& correlator_list, 
                      const std::vector<Operator_list>& operator_list,
                      const vec_pdg_Corr& lookup_corr, vec_index_2pt& lookup_2pt,
-                     std::vector<std::list<size_t> >& lookup_2pt_IO) {
+                     std::vector<indexlist_1>& lookup_2pt_IO,
+                     std::vector<indexlist_2>& lookup_4pt_1_IO, 
+                     std::vector<indexlist_2>& lookup_4pt_2_IO) {
 
   // TODO: think about symmetry of switching index_Q2 and index_Corr
   // init lookup_2pt
@@ -164,7 +171,7 @@ void init_lookup_2pt(const Correlator_list& correlator_list,
       for(const auto& op1_from_list : operator_list[corr.operator_numbers[0]]){
       for(const auto& op2_from_list : operator_list[corr.operator_numbers[1]]){
         for(auto op : lookup_2pt){
-          // TODO: change that to op_Q2[]
+          // TODO: change lookup_corr[op.index_Q2] to lookup_Q2[op.index_Q2]
           if(compare_quantum_numbers_of_pdg(lookup_corr[op.index_Q2], 
                                             op1_from_list)){
           if(compare_quantum_numbers_of_pdg(lookup_corr[op.index_Corr], 
@@ -185,6 +192,45 @@ void init_lookup_2pt(const Correlator_list& correlator_list,
     std::cout << std::endl;
   }
 
+  // init lookup_4pt_IO
+  for(const auto& corr : correlator_list){
+
+    if(corr.type.compare(0,5,"C4I2+") == 0){
+      std::list<std::pair<size_t, size_t> > write;
+      for(const auto& op1_from_list : operator_list[corr.operator_numbers[0]]){
+      for(const auto& op2_from_list : operator_list[corr.operator_numbers[1]]){
+      for(const auto& op3_from_list : operator_list[corr.operator_numbers[2]]){
+      for(const auto& op4_from_list : operator_list[corr.operator_numbers[3]]){
+        for(auto op : lookup_2pt){
+          // TODO: change lookup_corr[op.index_Q2] to lookup_Q2[op.index_Q2]
+          if(compare_quantum_numbers_of_pdg(lookup_corr[op.index_Q2], 
+                                            op1_from_list)){
+          if(compare_quantum_numbers_of_pdg(lookup_corr[op.index_Corr], 
+                                            op2_from_list)){
+          for(auto op2 : lookup_2pt){
+            if(compare_quantum_numbers_of_pdg(lookup_corr[op2.index_Q2], 
+                                              op3_from_list)){
+            if(compare_quantum_numbers_of_pdg(lookup_corr[op2.index_Corr], 
+                                              op4_from_list)){
+
+              write.emplace_back(std::pair<size_t, size_t>(op.id, op2.id));
+            }}
+          }
+          }}
+        }
+      }}}}
+      lookup_4pt_1_IO.push_back(write);
+      lookup_4pt_2_IO.push_back(write);
+    }
+  }
+
+  std::cout << std::endl;
+  for(const auto& a : lookup_4pt_1_IO){
+    for(const auto& b : a)
+      std::cout << b.first << "\t" << b.second << std::endl;
+    std::cout << std::endl;
+  }
+
 }
 
 // *****************************************************************************
@@ -193,7 +239,7 @@ void init_lookup_2pt(const Correlator_list& correlator_list,
 void init_lookup_4pt(const Correlator_list& correlator_list, 
                      const std::vector<Operator_list>& operator_list,
                      const vec_pdg_Corr& lookup_corr, vec_index_4pt& lookup_4pt,
-                     std::vector<std::list<size_t> >& lookup_4pt_IO) {
+                     std::vector<indexlist_1>& lookup_4pt_3_IO) {
 
   // initialization of op_C4
   
@@ -207,13 +253,71 @@ void init_lookup_4pt(const Correlator_list& correlator_list,
         set_index_4pt(op1_from_list, op2_from_list, op3_from_list, 
                       op4_from_list, lookup_corr, lookup_4pt);
       }}}} //loops over same physical situation end here
-    } //case 2pt-function ends here
+    } //case 4pt-function ends here
   } // loop over correlator_list ends here
+
+  // doubly counted lookup_index_C4 entries are deleted in order to not be
+  // calculated twice
+  auto it = lookup_4pt.begin();
+  while(it != lookup_4pt.end()) {
+    auto it2 = it;
+    it2++;
+    while(it2 != lookup_4pt.end()) {
+      if( (it->index_Q2[0] == it2->index_Q2[0]) && 
+          (it->index_Corr[0] == it2->index_Corr[0]) &&
+          (it->index_Q2[1] == it2->index_Q2[1]) && 
+          (it->index_Corr[1] == it2->index_Corr[1]) )
+        lookup_4pt.erase(it2);
+      else
+        it2++;
+    }
+    it++;
+  }
+
+  // initialize the id's of lookup_2pt
+  size_t counter = 0;
+  for(auto& op : lookup_4pt){
+    op.id = counter++;
+  }
 
   std::cout << std::endl;
   for(auto a : lookup_4pt){
-    std::cout << a.index_Q2[0] << "\t" << a.index_Corr[0] << "\t" 
-              << a.index_Q2[1] << "\t" << a.index_Corr[1] << std::endl;
+    std::cout << a.id << "\t" << a.index_Q2[0] << "\t" << a.index_Corr[0] 
+              << "\t" << a.index_Q2[1] << "\t" << a.index_Corr[1] << std::endl;
+  }
+
+  // init lookup_4pt_IO
+  for(const auto& corr : correlator_list){
+
+    if(corr.type.compare(0,5,"C4I2+") == 0){
+      std::list<size_t> write;
+      for(const auto& op1_from_list : operator_list[corr.operator_numbers[0]]){
+      for(const auto& op2_from_list : operator_list[corr.operator_numbers[1]]){
+      for(const auto& op3_from_list : operator_list[corr.operator_numbers[2]]){
+      for(const auto& op4_from_list : operator_list[corr.operator_numbers[3]]){
+        for(auto op : lookup_4pt){
+          // TODO: change lookup_corr[op.index_Q2] to lookup_Q2[op.index_Q2]
+          if(compare_quantum_numbers_of_pdg(lookup_corr[op.index_Q2[0]], 
+                                            op1_from_list)){
+          if(compare_quantum_numbers_of_pdg(lookup_corr[op.index_Corr[0]], 
+                                            op2_from_list)){
+          if(compare_quantum_numbers_of_pdg(lookup_corr[op.index_Q2[1]], 
+                                            op3_from_list)){
+          if(compare_quantum_numbers_of_pdg(lookup_corr[op.index_Corr[1]], 
+                                            op4_from_list)){
+            write.emplace_back(op.id);
+          }}}}
+        }
+      }}}}
+      lookup_4pt_3_IO.push_back(write);
+    }
+  }
+
+  std::cout << std::endl;
+  for(const auto& a : lookup_4pt_3_IO){
+    for(const auto& b : a)
+      std::cout << b << std::endl;
+    std::cout << std::endl;
   }
 
 }
@@ -227,9 +331,9 @@ void GlobalData::init_lookup_tables() {
     init_lookup_corr(correlator_list, operator_list, lookup_corr, lookup_vdv, 
                      lookup_rvdvr);    
     init_lookup_2pt(correlator_list, operator_list, lookup_corr, lookup_2pt,
-                    lookup_2pt_IO);
+                    lookup_2pt_IO, lookup_4pt_1_IO, lookup_4pt_2_IO);
     init_lookup_4pt(correlator_list, operator_list, lookup_corr, lookup_4pt,
-                    lookup_4pt_IO);
+                    lookup_4pt_3_IO);
 
   }
   catch(std::exception& e){

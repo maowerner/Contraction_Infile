@@ -239,5 +239,15 @@ void GlobalData::input_handling(
   correlator_input_data_handling(correlator_list_configs, correlator_list);
   config_input_data_handling(start_config, end_config, 
                                                delta_config);
+  // TODO: Are these still needed anywhere?
+  // computing some global variables depending on the input values
+  dim_row = Lx * Ly * Lz * 3;
+
+  //needed for config_utils.h
+  //4 is number of directions, 3 number of colors and 2 factor
+  //for memory requirement of complex numbers
+  V_TS = dim_row * 4 * 3 * 2;
+  V_for_lime = V_TS * Lt;
+
 }
 

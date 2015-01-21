@@ -100,15 +100,18 @@ void set_index_corr(vec_pdg_Corr& lookup_corr, vec_pd_VdaggerV& lookup_vdv,
         fast_counter_rvdvr++;
       }
       if(!is_known_rvdvr){ // setting the unknown quantum numbers
-        op.id_rVdaggerVr = counter_rvdvr;
+        op.id_rvdvr = counter_rvdvr;
         counter_rvdvr++;
         rvdaggervr_qu_nb.push_back(write);
       }
       else
-        op.id_rVdaggerVr = fast_counter_rvdvr;
+        op.id_rvdvr = fast_counter_rvdvr;
+
       // ######################################################################
       // check if quantum numbers are already stored in vdaggerv_qu_nb
       bool is_known_vdv = false;
+      op.first_vdv = false;
+      op.negative_momentum = false;
       size_t fast_counter_vdv = 0;// this gives the Op id if QN are duplicate
       // first check for duplicate quantum numbers
       for(const auto& vdv : vdaggerv_qu_nb){
@@ -129,29 +132,40 @@ void set_index_corr(vec_pdg_Corr& lookup_corr, vec_pd_VdaggerV& lookup_vdv,
           }
           fast_counter_vdv++;
         }
+        for(size_t i = 3; i < 6; i++)
+          write[i] *= -1;
+
+        // case quantum numbers are unknown -> create new entry for 
+        // vdaggerv_qu_nb
         if(!is_known_vdv){
-          op.id_VdaggerV = counter_vdv;
+          op.id_vdv = counter_vdv;
           vdaggerv_qu_nb.push_back(write);
           counter_vdv++;
+          op.first_vdv = true;
         }
+        // case quantum numbers are unknown, but opposite momente exist. 
+        // VdaggerV can be obtained from the negative momentum.
         else{
-          op.flag_VdaggerV = -1;
-          op.id_VdaggerV = fast_counter_vdv;
+          op.negative_momentum = true;
+          op.id_vdv = fast_counter_vdv;
         }
       }
+      // case same quantum numbers already exist. 
+      // TODO: I don't think that works if several negative momenta exist.
       else{
-        op.flag_VdaggerV = 1;
-        op.id_VdaggerV = fast_counter_vdv;
+        op.negative_momentum = lookup_corr[fast_counter_vdv].negative_momentum;
+        op.id_vdv = fast_counter_vdv;
       }
     }
     else{ // setting the very first entry
       copy_quantum_numbers(op, write);
       rvdaggervr_qu_nb.push_back(write);
       vdaggerv_qu_nb.push_back(write);
-      op.id_VdaggerV = counter_vdv;
-      op.id_rVdaggerVr = counter_rvdvr;
-      counter_rvdvr++;
+      op.id_vdv = counter_vdv;
+      op.id_rvdvr = counter_rvdvr;
+      op.first_vdv = true;
       counter_vdv++;
+      counter_rvdvr++;
     }
   }
 
@@ -164,21 +178,24 @@ void set_index_corr(vec_pdg_Corr& lookup_corr, vec_pd_VdaggerV& lookup_vdv,
   for(auto& op_vdv : lookup_vdv){
     op_vdv.id = index;
     for(const auto& op : lookup_corr){
-      if(index == op.id_VdaggerV)
+      if(index == op.id_vdv)
         op_vdv.index = op.id;
     }
     index++;
   }
+
   index = 0;
   for(auto& op_rvdvr : lookup_rvdvr){
     op_rvdvr.id = index;
     for(const auto& op : lookup_corr){
-      if(index == op.id_VdaggerV){
+      if(index == op.id_vdv){
         op_rvdvr.index = op.id;
-        if(op.flag_VdaggerV == 1)
-          op_rvdvr.adjoint = false;
-        else
+        // if the momentum was only build for the negative in VdaggerV, the 
+        // adjoint has been taken
+        if(op.negative_momentum == true)
           op_rvdvr.adjoint = true;
+        else
+          op_rvdvr.adjoint = false;
       }
     }
     index++;

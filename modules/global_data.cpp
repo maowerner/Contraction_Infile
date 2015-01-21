@@ -160,22 +160,14 @@ void GlobalData::read_parameters (int ac, char* av[]) {
     }
     ifs.close();
 
-    //reading input file options
+    // reading input file options
     input_handling(quark_configs, operator_list_configs, 
                         correlator_list_configs);
 
-
+    // setting the lookup tables for all needed quantum numbers to calculate
+    // the wanted correlators
     init_lookup_tables();
 
-    // TODO: Are these still needed anywhere?
-    // computing some global variables depending on the input values
-    dim_row = Lx * Ly * Lz * 3;
-
-    //needed for config_utils.h
-    //4 is number of directions, 3 number of colors and 2 factor
-    //for memory requirement of complex numbers
-    V_TS = dim_row * 4 * 3 * 2;
-    V_for_lime = V_TS * Lt;
   }
   catch(std::exception& e){
     std::cout << e.what() << "\n";
